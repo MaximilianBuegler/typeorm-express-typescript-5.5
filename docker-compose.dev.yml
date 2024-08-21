@@ -10,7 +10,7 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - ./database/boilerplate:/var/lib/postgresql/data/
+      - db_volume:/var/lib/postgresql/data/
 
   be_boilerplate:
     entrypoint: /bin/sh './scripts/be-node-dev.sh'
@@ -38,3 +38,7 @@ services:
     volumes:
       - .:/app/
       - /app/node_modules
+
+volumes:
+  db_volume:
+    external: false

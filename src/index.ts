@@ -1,25 +1,25 @@
 import 'dotenv/config';
 import 'reflect-metadata';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
-import bodyParser from 'body-parser';
-import cors from 'cors';
-import express from 'express';
+import * as cors from 'cors';
+import * as express from 'express';
 import helmet from 'helmet';
-import morgan from 'morgan';
+import * as morgan from 'morgan';
+import * as swaggerJsdoc from 'swagger-jsdoc';
+import * as swaggerUi from 'swagger-ui-express';
 
 import './utils/response/customSuccess';
 import { errorHandler } from './middleware/errorHandler';
 import { getLanguage } from './middleware/getLanguage';
-import { dbCreateConnection } from './orm/dbCreateConnection';
 import routes from './routes';
 
 export const app = express();
 app.use(cors());
 app.use(helmet());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(getLanguage);
 
 try {
@@ -32,6 +32,22 @@ try {
 }
 app.use(morgan('combined'));
 
+const options = {
+  failOnErrors: true,
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Hello World',
+      version: '1.0.0',
+    },
+  },
+  apis: ['**/*.ts'], // files containing annotations as above
+};
+
+const swaggerSpec = swaggerJsdoc(options);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
+
 app.use('/', routes);
 
 app.use(errorHandler);
@@ -42,5 +58,5 @@ app.listen(port, () => {
 });
 
 (async () => {
-  await dbCreateConnection();
+  //await dbCreateConnection();
 })();

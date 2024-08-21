@@ -1,14 +1,39 @@
-import { Request, Response, NextFunction } from 'express';
-import { getRepository } from 'typeorm';
+import { NextFunction, Request, Response } from 'express';
 
+import * as dataSource from 'orm/dbCreateConnection';
 import { User } from 'orm/entities/users/User';
 import { CustomError } from 'utils/response/custom-error/CustomError';
 
+/**
+ * @swagger
+ *
+ * /v1/auth/change-password:
+ *   post:
+ *     description: Change password
+ *     security:
+ *       - BearerAuth:
+ *         - write
+ *     produces:
+ *       - application/json
+ *     requestBody:
+ *        required: true
+ *        content:
+ *           application/json:
+ *             schema:
+ *               properties:
+ *                password:
+ *                  type: string
+ *               passwordNew:
+ *                  type: string
+ *     responses:
+ *       200:
+ *         description: changed password
+ */
 export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
   const { password, passwordNew } = req.body;
   const { id, name } = req.jwtPayload;
 
-  const userRepository = getRepository(User);
+  const userRepository = dataSource.getRepository(User);
   try {
     const user = await userRepository.findOne({ where: { id } });
 
@@ -24,7 +49,7 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
 
     user.password = passwordNew;
     user.hashPassword();
-    userRepository.save(user);
+    await userRepository.save(user);
 
     res.customSuccess(200, 'Password successfully changed.');
   } catch (err) {

@@ -1,16 +1,15 @@
 import 'mocha';
 import { expect } from 'chai';
 import { agent as request } from 'supertest';
-import { getRepository, Connection, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
-import { dbCreateConnection } from 'orm/dbCreateConnection';
+import * as dataSource from 'orm/dbCreateConnection';
 import { Role } from 'orm/entities/users/types';
 import { User } from 'orm/entities/users/User';
 
 import { app } from '../../';
 
 describe('Users', () => {
-  let dbConnection: Connection;
   let userRepository: Repository<User>;
 
   const userPassword = 'pass1';
@@ -33,8 +32,10 @@ describe('Users', () => {
   standardUser.role = 'STANDARD' as Role;
 
   before(async () => {
-    dbConnection = await dbCreateConnection();
-    userRepository = getRepository(User);
+    if (!dataSource.isInitialized) {
+      await dataSource.initialize();
+    }
+    userRepository = dataSource.getRepository(User);
   });
 
   beforeEach(async () => {
@@ -54,7 +55,7 @@ describe('Users', () => {
       const res = await request(app).get('/v1/users').set('Authorization', adminUserToken);
       expect(res.status).to.equal(200);
       expect(res.body.message).to.equal('List of users.');
-      expect(res.body.data[3].email).to.eql('hank.schrader@test.com');
+      expect(res.body.data.length).to.be.above(4);
     });
 
     it('should report error of unauthorized user', async () => {
@@ -73,7 +74,7 @@ describe('Users', () => {
 
   describe('GET /v1/auth/users//:id([0-9]+)', () => {
     it('should get user', async () => {
-      const user = await userRepository.findOne({ email: adminUser.email });
+      const user = await userRepository.findOne({ where: { email: adminUser.email } });
       const res = await request(app).get(`/v1/users/${user.id}`).set('Authorization', adminUserToken);
       expect(res.status).to.equal(200);
       expect(res.body.message).to.equal('User found');

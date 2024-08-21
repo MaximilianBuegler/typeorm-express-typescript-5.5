@@ -1,17 +1,12 @@
-import { Connection, createConnection, getConnectionManager } from 'typeorm';
+import * as dataSource from './config/ormconfig';
 
-import config from './config/ormconfig';
+dataSource
+  .initialize()
+  .then(() => {
+    console.log('Data Source has been initialized!');
+  })
+  .catch((err) => {
+    console.error('Error during Data Source initialization:', err);
+  });
 
-export const dbCreateConnection = async (): Promise<Connection | null> => {
-  try {
-    const conn = await createConnection(config);
-    console.log(`Database connection success. Connection name: '${conn.name}' Database: '${conn.options.database}'`);
-  } catch (err) {
-    if (err.name === 'AlreadyHasActiveConnectionError') {
-      const activeConnection = getConnectionManager().get(config.name);
-      return activeConnection;
-    }
-    console.log(err);
-  }
-  return null;
-};
+export = dataSource;

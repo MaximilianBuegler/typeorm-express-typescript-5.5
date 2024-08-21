@@ -1,4 +1,4 @@
-#  TypeORM / Express / TypeScript RESTful API boilerplate
+# TypeORM / Express / TypeScript RESTful API boilerplate
 
 [![CI][build-badge]][build-url]
 [![TypeScript][typescript-badge]][typescript-url]
@@ -25,7 +25,7 @@ _Easily set up a local development environment with single command!_
 - clone the repo
 - `npm run docker:dev` 🚀
 
-Visit [localhost:4000](http://localhost:4000/) or if using Postman grab [config](/postman).
+Visit [localhost:4000](http://localhost:4000/) or [localhost:4000/api-docs](http://localhost:4000/api-docs)
 
 ### _What happened_ 💥
 
@@ -61,6 +61,7 @@ Containers created:
 - Automated npm & Docker dependency updates with [Renovate](https://github.com/renovatebot/renovate) (set to patch version only)
 - Commit messages must meet [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format.  
   After staging changes just run `npm run commit` and get instant feedback on your commit message formatting and be prompted for required fields by [Commitizen](https://github.com/commitizen/cz-cli)
+- [Swagger-UI](https://www.npmjs.com/package/swagger-ui-express) using /api-docs
 
 ## Other awesome boilerplates:
 

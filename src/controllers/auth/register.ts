@@ -1,13 +1,35 @@
 import { Request, Response, NextFunction } from 'express';
-import { getRepository } from 'typeorm';
 
+import * as dataSource from 'orm/dbCreateConnection';
 import { User } from 'orm/entities/users/User';
 import { CustomError } from 'utils/response/custom-error/CustomError';
 
+/**
+ * @swagger
+ *
+ * /v1/auth/register:
+ *   post:
+ *     description: Register to the application
+ *     produces:
+ *       - application/json
+ *     requestBody:
+ *        required: true
+ *        content:
+ *           application/json:
+ *             schema:
+ *               properties:
+ *                email:
+ *                  type: string
+ *                password:
+ *                  type: string
+ *     responses:
+ *       200:
+ *         description: registered
+ */
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
 
-  const userRepository = getRepository(User);
+  const userRepository = dataSource.getRepository(User);
   try {
     const user = await userRepository.findOne({ where: { email } });
 

@@ -1,13 +1,34 @@
 import { Request, Response, NextFunction } from 'express';
-import { getRepository } from 'typeorm';
 
+import * as dataSource from 'orm/dbCreateConnection';
 import { User } from 'orm/entities/users/User';
 import { CustomError } from 'utils/response/custom-error/CustomError';
 
+/**
+ * @swagger
+ *
+ * /v1/users/{id}:
+ *   delete:
+ *     description: Delete a user
+ *     security:
+ *       - BearerAuth:
+ *         - write
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         type: integer
+ *         description: The user ID
+ *     responses:
+ *       200:
+ *         description: login
+ */
 export const destroy = async (req: Request, res: Response, next: NextFunction) => {
-  const id = req.params.id;
+  const id = parseInt(req.params.id);
 
-  const userRepository = getRepository(User);
+  const userRepository = dataSource.getRepository(User);
   try {
     const user = await userRepository.findOne({ where: { id } });
 

@@ -6,6 +6,17 @@ import { validatorLogin, validatorRegister, validatorChangePassword } from 'midd
 
 const router = Router();
 
+/**
+ * @swagger
+ *
+ *
+ * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
+ */
+
 router.post('/login', [validatorLogin], login);
 router.post('/register', [validatorRegister], register);
 router.post('/change-password', [checkJwt, validatorChangePassword], changePassword);

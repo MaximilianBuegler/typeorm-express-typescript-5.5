@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 import { Role, Language } from './types';
@@ -38,6 +38,12 @@ export class User {
     length: 15,
   })
   language: string;
+
+  @Column({
+    default: 'Mustard',
+    length: 15,
+  })
+  favorite_sauce: string;
 
   @Column()
   @CreateDateColumn()
