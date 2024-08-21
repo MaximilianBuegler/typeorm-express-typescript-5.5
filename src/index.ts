@@ -37,7 +37,7 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Hello World',
+      title: 'Backend Boilerplate',
       version: '1.0.0',
     },
   },
