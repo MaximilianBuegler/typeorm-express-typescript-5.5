@@ -12,6 +12,7 @@ Boilerplate with focus on best practices and painless developer experience:
 - TypeScript first
 - RESTful APIs
 - JWT authentication with role based authorization
+- Swagger UI
 
 ## Requirements
 
