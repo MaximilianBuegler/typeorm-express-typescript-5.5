@@ -38,7 +38,7 @@ Containers created:
 ## Features:
 
 - [Express](https://github.com/expressjs/express) framework
-- [TypeScript v4](https://github.com/microsoft/TypeScript) codebase
+- [TypeScript v5.5](https://github.com/microsoft/TypeScript) codebase
 - [TypeORM](https://typeorm.io/) using Data Mapper pattern
 - [Docker](https://www.docker.com/) environment:
   - Easily start local development using [Docker Compose](https://docs.docker.com/compose/) with single command `npm run docker:dev`
