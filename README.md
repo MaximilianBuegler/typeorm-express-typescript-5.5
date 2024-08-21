@@ -15,7 +15,7 @@ Boilerplate with focus on best practices and painless developer experience:
 
 ## Requirements
 
-- [Node v16+](https://nodejs.org/)
+- [Node v22.6.0+](https://nodejs.org/)
 - [Docker](https://www.docker.com/)
 
 ## Running
@@ -32,7 +32,7 @@ Visit [localhost:4000](http://localhost:4000/) or [localhost:4000/api-docs](http
 Containers created:
 
 - Postgres database container seeded with 💊 Breaking Bad characters in `Users` table (default credentials `user=walter`, `password=white` in [.env file](./.env))
-- Node (v16 Alpine) container with running boilerplate RESTful API service
+- Node (v22.6.0) container with running boilerplate RESTful API service
 - and one Node container instance to run tests locally or in CI
 
 ## Features:
