@@ -3,6 +3,10 @@ stages:
   - lint
   - deploy
 
+variables:
+  GROUP_NAME: group
+  PROJECT_NAME: be_boilerplate
+
 unit-test:
   stage: test
   image: docker:latest
@@ -12,10 +16,9 @@ unit-test:
   variables:
     NODE_ENV: test
     DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
+    DOCKER_TLS_CERTDIR: ''
   before_script:
     - apk add --no-cache curl
-    - docker info
     - echo "Starting Docker services..."
     - docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     - echo "Waiting for the be_boilerplate service to be up..."
@@ -27,9 +30,13 @@ unit-test:
   after_script:
     - docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
   artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: 'coverage/cobertura-coverage.xml'
     paths:
       - coverage/
-  coverage: '/All files[^|]*\|[^|]*\s+(\d+%)$/'
+  coverage: '/All files[^\|]*\|[^\|]*\s+([\d\.]+)/'
 
 # https://aquasecurity.github.io/trivy/v0.18.0/integrations/gitlab-ci/
 vulnerability-test-job:
@@ -59,25 +66,17 @@ vulnerability-test-job:
 outdated-libraries-job:
   stage: test
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || ( $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH != "main" )
-  image: node:18
+    - if: $CI_PIPELINE_SOURCE == "schedule" # only run on scheduled pipeline
+  image: node:latest
   before_script:
     - echo "Running check for outdated versions..."
     - npm install
   script:
-    - echo "Checking outdated versions..."
-    - OUTDATED=`npm outdated --parseable | wc -l`
-    - if [ "$OUTDATED" -gt 0 ]; then
-    - npm outdated > outdated_report.txt
-    - exit 1
-    - fi
-  artifacts:
-    paths:
-      - outdated_report.txt
-  allow_failure: true
+    - npm outdated
 
 eslint:
   stage: lint
+  image: node:latest
   script:
     - npm i eslint
     - npm run lint
@@ -87,9 +86,9 @@ deploy-job:
   stage: deploy
   rules:
     - if: $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "qa" || $CI_COMMIT_BRANCH == "main")
-  image: docker:24.0.6
+  image: docker:latest
   services:
-    - docker:24.0.6-dind
+    - docker:dind
   before_script:
     - apk add --no-cache jq
     - RELEASE_VERSION=$(jq -r '.version' < package.json)
@@ -103,9 +102,9 @@ deploy-job-dev:
   stage: deploy
   rules:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "development"
-  image: docker:24.0.6
+  image: docker:latest
   services:
-    - docker:24.0.6-dind
+    - docker:dind
   before_script:
     - apk add --no-cache jq
     - RELEASE_VERSION=$(jq -r '.version' < package.json)
