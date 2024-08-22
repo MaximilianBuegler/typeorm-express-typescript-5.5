@@ -1,0 +1,117 @@
+stages:
+  - test
+  - lint
+  - deploy
+
+unit-test:
+  stage: test
+  image: docker:latest
+  services:
+    - name: docker:dind
+      alias: docker
+  variables:
+    NODE_ENV: test
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - apk add --no-cache curl
+    - docker info
+    - echo "Starting Docker services..."
+    - docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+    - echo "Waiting for the be_boilerplate service to be up..."
+    - while ! docker exec be_boilerplate_test sh -c "curl -s http://be_boilerplate:4000/v1/health"; do echo "Waiting for be_boilerplate to be ready..." && sleep 2; done
+    - echo "be_boilerplate is live!"
+    - docker logs be_boilerplate -n 1000
+  script:
+    - docker exec be_boilerplate_test sh -c "npm run test"
+    - docker cp be_boilerplate_test:/app/coverage ./coverage
+  after_script:
+    - docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
+  artifacts:
+    paths:
+      - coverage/
+  coverage: '/All files[^|]*\|[^|]*\s+(\d+%)$/'
+
+# https://aquasecurity.github.io/trivy/v0.18.0/integrations/gitlab-ci/
+vulnerability-test-job:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || ( $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH != "main" )
+  image:
+    name: docker.io/aquasec/trivy:latest
+    entrypoint: ['']
+  before_script:
+    - apk add --update npm
+  script:
+    - trivy --version
+    # update vulnerabilities db
+    - trivy --cache-dir .cache/trivy/ image --download-db-only --no-progress
+    # Prints full report
+    - trivy --cache-dir .cache/trivy/ fs --scanners vuln --exit-code 0 --no-progress ./
+    # Fails on every vulnerability that can be fixed
+    - trivy --cache-dir .cache/trivy/ fs --scanners vuln --ignore-unfixed --exit-code 1 --no-progress ./ > vuln_report.txt
+    # Fails on npm audit high vulnerabilities. No ignore-unfixed option,
+    - npm audit --audit-level=high >> vuln_report.txt
+  artifacts:
+    paths:
+      - vuln_report.txt
+  allow_failure: true
+
+outdated-libraries-job:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || ( $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH != "main" )
+  image: node:18
+  before_script:
+    - echo "Running check for outdated versions..."
+    - npm install
+  script:
+    - echo "Checking outdated versions..."
+    - OUTDATED=`npm outdated --parseable | wc -l`
+    - if [ "$OUTDATED" -gt 0 ]; then
+    - npm outdated > outdated_report.txt
+    - exit 1
+    - fi
+  artifacts:
+    paths:
+      - outdated_report.txt
+  allow_failure: true
+
+eslint:
+  stage: lint
+  script:
+    - npm i eslint
+    - npm run lint
+    - npm run format-lint
+
+deploy-job:
+  stage: deploy
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "qa" || $CI_COMMIT_BRANCH == "main")
+  image: docker:24.0.6
+  services:
+    - docker:24.0.6-dind
+  before_script:
+    - apk add --no-cache jq
+    - RELEASE_VERSION=$(jq -r '.version' < package.json)
+  script:
+    - echo "Creating a docker image ..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/$GROUP_NAME/$PROJECT_NAME:$CI_COMMIT_BRANCH-$RELEASE_VERSION .
+    - docker push $CI_REGISTRY/$GROUP_NAME/$PROJECT_NAME:$CI_COMMIT_BRANCH-$RELEASE_VERSION
+
+deploy-job-dev:
+  stage: deploy
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "development"
+  image: docker:24.0.6
+  services:
+    - docker:24.0.6-dind
+  before_script:
+    - apk add --no-cache jq
+    - RELEASE_VERSION=$(jq -r '.version' < package.json)
+  script:
+    - echo "Creating a docker image ..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/$GROUP_NAME/$PROJECT_NAME:$CI_COMMIT_BRANCH .
+    - docker push $CI_REGISTRY/$GROUP_NAME/$PROJECT_NAME:$CI_COMMIT_BRANCH
