@@ -21,7 +21,6 @@ unit-test:
     - echo "Waiting for the be_boilerplate service to be up..."
     - while ! docker exec be_boilerplate_test sh -c "curl -s http://be_boilerplate:4000/v1/health"; do echo "Waiting for be_boilerplate to be ready..." && sleep 2; done
     - echo "be_boilerplate is live!"
-    - docker logs be_boilerplate -n 1000
   script:
     - docker exec be_boilerplate_test sh -c "npm run test"
     - docker cp be_boilerplate_test:/app/coverage ./coverage
