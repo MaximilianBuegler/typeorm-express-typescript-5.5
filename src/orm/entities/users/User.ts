@@ -39,12 +39,6 @@ export class User {
   })
   language: string;
 
-  @Column({
-    default: 'Mustard',
-    length: 15,
-  })
-  favorite_sauce: string;
-
   @Column()
   @CreateDateColumn()
   created_at: Date;
